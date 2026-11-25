@@ -1,17 +1,5 @@
 # Off-the-shelf decision models served by the LiteLLM proxy (no fine-tuning).
-# Endpoint + key come from .env (LITELLM_API_BASE, LITELLM_KEY), never committed.
-#
-# Rate limits (measured 2026-11-18, FINDINGS.md):
-#   LiteLLM key  (tan_xue_wen):  1,000 RPM, 1,000,000 TPM, budget $300 / month
-#   LiteLLM team (labs):         2,000 RPM,   200,000 TPM, budget $5,000 / 30 days
-#   TPM is charged on OUTPUT tokens only for decision models (~1 per answer),
-#   so it never binds.
-#   The binding limit is the proxy's AWS load balancer / WAF (server: awselb):
-#   it returns an HTML 403 for ALL requests for ~2-4 min once a rolling
-#   ~5-min window sees ~800-1,500 requests. The window is shared with every
-#   other client of the proxy (incl. Claude Code and the Hermes gateway on
-#   this machine), so there is no fixed safe rate. 150 RPM (~750 / 5 min)
-#   stayed under every block observed; a block triggers a 5-min cooldown.
+
 rate_limit:
   rpm: 150                  # override per run: PRETRAINED_RPM=...
   max_concurrency: 16       # in-flight requests; ~0.5 s latency per request
