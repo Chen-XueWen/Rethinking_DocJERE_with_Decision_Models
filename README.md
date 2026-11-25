@@ -1,4 +1,4 @@
-# JEREX with a Jev-Like Model Twist
+# Rethinking Document-Level Joint Entity and Relation Extraction with Decision Models
 
 Document-level joint entity and relation extraction on DocRED/Re-DocRED via
 non-autoregressive decision scoring (Unsloth `FastDecisionModel`, Clef-style
