@@ -1,0 +1,12 @@
+{
+  "labels": [
+    "O",
+    "B-PER", "I-PER",
+    "B-ORG", "I-ORG",
+    "B-LOC", "I-LOC",
+    "B-TIME", "I-TIME",
+    "B-NUM", "I-NUM",
+    "B-MISC", "I-MISC"
+  ],
+  "entity_types": ["PER", "ORG", "LOC", "TIME", "NUM", "MISC"]
+}

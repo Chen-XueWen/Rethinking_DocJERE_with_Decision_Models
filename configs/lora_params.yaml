@@ -1,0 +1,53 @@
+# LoRA / training hyperparameters shared across the three stage adapters
+lora:
+  r: 16
+  lora_alpha: 16
+  lora_dropout: 0.0
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+  # Off: checkpointing recomputes activations to save memory we don't need
+  # (119 GB unified). Measured 1.46x faster training, same accuracy
+  # (FINDINGS.md 2026-11-12). Re-enable ("unsloth") if a big backbone OOMs.
+  use_gradient_checkpointing: false
+  random_state: 3407
+
+training:
+  optim: adamw_8bit
+  learning_rate: 2.0e-4          # LoRA weights
+  head_learning_rate: 1.0e-4     # Clef cross-attention decision head
+  warmup_ratio: 0.05
+  lr_scheduler_type: linear
+  weight_decay: 0.01
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 4
+  logging_steps: 10
+  seed: 3407
+  bf16: true
+
+# max_train_rows caps ROWS per stage (random sample). Rows are packed with
+# many questions each (indexed design), so a row is ~3-4k tokens. DocRED
+# train sizes: stage1 48.9k rows (~11 q/row), stage2 5.6k rows (~24 q/row),
+# stage3 5.2k gate rows (~25 q/row) + 49.6k relation rows. 0 = use all.
+stages:
+  stage1_ner:
+    epochs: 1
+    max_train_rows: 8000
+  stage2_coref:
+    epochs: 1
+    max_train_rows: 0            # all 5.6k rows = all 134k pair questions
+  stage3_re:
+    epochs: 1
+    max_train_rows: 12000        # mix of gate + relation rows
+
+# Inference-time post-processing hyperparameters (tuned on our dev split)
+inference:
+  coref_alpha: 0.5               # complete-linkage distance cutoff in [0.4, 0.6]
+  tau_gate: 0.5                  # prune pair if P(not related) >= tau_gate
+  tau_rel: 0.5                   # emit relation if P(r) >= tau_rel
+
+# Negative subsampling (training splits only)
+sampling:
+  stage2_neg_ratio: 3            # negatives : positives for coref pairs
+  stage3_neg_ratio: 3            # NA pairs : related pairs
+  stage3_hard_frac: 0.7          # fraction of negatives that co-occur intra-sentence
+  stage3_rel_na_ratio: 0.5       # hard NA relation rows per gold relation pair
+  seed: 3407

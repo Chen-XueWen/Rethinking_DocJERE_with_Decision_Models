@@ -1,0 +1,24 @@
+[project]
+name = "jerex-decision-twist"
+version = "0.1.0"
+description = "JEREX-style document-level joint extraction via non-autoregressive decision scoring (Jev/Clef/Laya paradigm)"
+requires-python = ">=3.12"
+dependencies = [
+    "torch",
+    "transformers",
+    "datasets",
+    "peft",
+    "bitsandbytes",
+    "unsloth",
+    "unsloth_zoo",
+    "trl",
+    "accelerate",
+    "scipy",
+    "scikit-learn",
+    "numpy",
+    "pyyaml",
+    "tqdm",
+]
+
+[tool.setuptools]
+packages = { find = { where = ["."], include = ["src*"] } }

@@ -1,0 +1,73 @@
+# Model checkpoints, quantization, context windows
+models:
+  qwen08:
+    # Unsloth decision-model guide's smallest Qwen3.5 (78% test acc, ~4 GB VRAM
+    # in their benchmarks). Used for the first full end-to-end run.
+    name: unsloth/Qwen3.5-0.8B
+    max_seq_length: 4096
+    load_in_4bit: false   # bf16: only ~1.6 GB, and marginally faster than 4-bit
+    backend: unsloth
+  gemma4_e2b:
+    # Gemma 4 E2B instruct (~2B effective / 5.1B total incl. per-layer
+    # embeddings, vision + audio towers). Unsloth benchmarks Gemma 4 (E4B) as a
+    # decision model; the text path gets a fresh Clef head like Qwen.
+    name: unsloth/gemma-4-E2B-it
+    max_seq_length: 4096
+    load_in_4bit: false   # bf16, like qwen08 (4-bit gave no speed-up there)
+    backend: unsloth
+  mbert_large:
+    # answerdotai/ModernBERT-large (395M encoder) + a FRESH Laya-style decision
+    # head (421M total). Unsloth can't load the raw encoder as a decision model,
+    # so src/models/build_encoder_decision.py writes it in Laya's checkpoint
+    # layout under `name` (a local path). Same architecture as Laya, without
+    # Laya's decision pre-training. Laya models train in 16-bit only.
+    name: weights/base/mbert_large
+    encoder: answerdotai/ModernBERT-large
+    max_seq_length: 2048     # one question per sequence; longest item measured 1,549 tokens
+    # Option+instruction token budget per question. Must fit the 97-way relation
+    # schema (~610 option tokens): at Laya's default 256, options are cut to
+    # 4 tokens and the instruction to 8, dropping the entity ids, so every
+    # pair in a doc got the identical input (FINDINGS.md 2026-11-16).
+    head_max_len: 768
+    load_in_4bit: false
+    backend: unsloth
+  qwen:
+    name: unsloth/Qwen3.5-4B
+    max_seq_length: 4096
+    load_in_4bit: true
+    backend: unsloth
+  llama:
+    name: unsloth/Llama-3.2-3B-Instruct
+    max_seq_length: 4096
+    load_in_4bit: true
+    backend: unsloth
+  clef-flash:
+    # 9B, post-trained from Qwen3.5-9B. Own loader (joint_schema_model) for
+    # zero-shot; QLoRA fine-tuning via unsloth FastDecisionModel.
+    name: Cloudflare/clef-flash
+    max_seq_length: 4096
+    load_in_4bit: true
+    backend: unsloth
+  laya:
+    # 421M ModernBERT-large decision model. 16-bit LoRA (no 4-bit support).
+    # Option budget (head_max_len) is limited -> relation question is chunked.
+    name: convaiinnovations/laya
+    max_seq_length: 4096
+    load_in_4bit: false
+    backend: unsloth
+
+datasets:
+  docred:
+    raw_dir: data/raw/docred
+    train: train_annotated.json   # re-split into train/dev (JEREX protocol)
+    test: dev.json                # original dev = labelled local test set
+  redocred:
+    raw_dir: data/raw/redocred
+    train: train_revised.json
+    dev: dev_revised.json
+    test: test_revised.json
+
+# JEREX protocol: hold out this fraction of train_annotated docs as our dev
+jerex_split:
+  dev_fraction: 0.1
+  seed: 3407
